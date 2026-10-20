@@ -1,0 +1,23 @@
+{
+  "_note": "Fantasy scoring for my league (offensive players). Edit these values if the league rules change.",
+  "passing_yards": 0.04,
+  "passing_tds": 6,
+  "passing_interceptions": -1,
+  "passing_2pt": 2,
+  "rushing_yards": 0.1,
+  "rushing_tds": 6,
+  "rushing_2pt": 2,
+  "receptions": 1,
+  "receiving_yards": 0.1,
+  "receiving_tds": 6,
+  "receiving_2pt": 2,
+  "fumbles_lost": -2,
+  "special_teams_tds": 6,
+  "fumble_recovery_tds": 6,
+  "_bonus_note": "Bonuses are tiered: only the highest tier reached counts (a 200-yard rushing game is +3, not +4).",
+  "bonuses": {
+    "rushing_yards": [[100, 1], [200, 3]],
+    "receiving_yards": [[100, 1], [200, 3]],
+    "passing_yards": [[300, 1], [400, 3]]
+  }
+}

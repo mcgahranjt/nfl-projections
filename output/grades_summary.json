@@ -1,0 +1,40 @@
+{
+  "season": 2026,
+  "games": null,
+  "fantasy": [],
+  "reference": {
+    "spread": {
+      "seasons": "2016-2025",
+      "model": 10.132498693499754,
+      "market": 9.777073524085477
+    },
+    "fantasy": [
+      {
+        "position": "QB",
+        "model": 7.604657861560914,
+        "season_avg": 8.24815467120549
+      },
+      {
+        "position": "RB",
+        "model": 4.494238007006103,
+        "season_avg": 4.576405010005576
+      },
+      {
+        "position": "WR",
+        "model": 4.726844881399308,
+        "season_avg": 4.791369713577886
+      },
+      {
+        "position": "TE",
+        "model": 3.675480131572761,
+        "season_avg": 3.7504620763072194
+      },
+      {
+        "position": "all",
+        "model": 4.7116642895622025,
+        "season_avg": 4.83736792565521
+      }
+    ]
+  },
+  "first_week_graded": null
+}

@@ -1,0 +1,10 @@
+# downloaded data (the scripts rebuild it)
+data/
+
+# generated every run
+logs/
+site/
+
+# system files
+__pycache__/
+.DS_Store

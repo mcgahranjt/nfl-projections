@@ -1,0 +1,8 @@
+# On an Intel Mac with Python 3.14, install with: pip3 install --only-binary=:all: -r requirements.txt
+nflreadpy
+polars
+pyarrow
+pandas
+numpy
+scipy
+requests

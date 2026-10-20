@@ -1,0 +1,22 @@
+{
+  "QB": {
+    "low_scale": 1.22,
+    "high_scale": 1.04,
+    "blend_weight": 0.75
+  },
+  "RB": {
+    "low_scale": 1.12,
+    "high_scale": 1.22,
+    "blend_weight": 0.55
+  },
+  "WR": {
+    "low_scale": 1.0,
+    "high_scale": 1.06,
+    "blend_weight": 0.55
+  },
+  "TE": {
+    "low_scale": 0.98,
+    "high_scale": 1.06,
+    "blend_weight": 0.5
+  }
+}

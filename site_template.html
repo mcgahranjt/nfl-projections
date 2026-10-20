@@ -1,0 +1,312 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>NFL Projections</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Public+Sans:wght@400;500;600&display=swap">
+<style>
+/* Built by build_site.py from the model's output files. Layout: tabs across the top; game cards that open into both teams' fantasy projections. */
+:root{
+  --bg:#f3f5f4; --surface:#ffffff; --ink:#17201c; --muted:#5b6862; --line:#dce3df;
+  --turf:#1f6b45; --turf-soft:#dcefe4; --heat:#4f9a72; --chip:#fff4d6; --chip-ink:#7a5300;
+  --display:"Barlow Condensed","Arial Narrow",Arial,sans-serif;
+  --body:"Public Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0e1412; --surface:#16201c; --ink:#e5ece8; --muted:#92a39a; --line:#26332d;
+  --turf:#6fd39c; --turf-soft:#1d3a2b; --heat:#2f7a55; --chip:#3a2f12; --chip-ink:#f2cf74; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0e1412; --surface:#16201c; --ink:#e5ece8; --muted:#92a39a; --line:#26332d;
+  --turf:#6fd39c; --turf-soft:#1d3a2b; --heat:#2f7a55; --chip:#3a2f12; --chip-ink:#f2cf74; color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.45;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 40px}
+.wrap{max-width:920px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+header{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding-block:14px 10px;
+  display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:10px;border-bottom:1px solid var(--line)}
+h1{font-family:var(--display);font-weight:700;font-size:30px;margin:0;line-height:1}
+h2{font-family:var(--display);font-size:24px;margin:0;line-height:1.1}
+.sub{color:var(--muted);font-size:13px}
+nav{display:flex;gap:2px;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:3px;max-width:100%;overflow-x:auto;scrollbar-width:none}
+nav button{font:600 13px var(--body);border:0;background:none;color:var(--muted);padding:7px 12px;border-radius:999px;cursor:pointer;white-space:nowrap;flex:none}
+nav button[aria-selected="true"]{background:var(--turf);color:var(--surface)}
+@media (max-width:480px){nav{width:100%}nav button{flex:1;padding:7px 4px}}
+button:focus-visible,summary:focus-visible,input:focus-visible,select:focus-visible,tr:focus-visible{outline:2px solid var(--turf);outline-offset:2px}
+.num{font-variant-numeric:tabular-nums}
+.lbl{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.note{font-size:13px;color:var(--muted)} .foot{font-size:12px;color:var(--muted)}
+section{display:flex;flex-direction:column;gap:12px}
+.alert{font-size:13px;background:var(--chip);color:var(--chip-ink);border-radius:8px;padding:8px 12px}
+/* games */
+.game{background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.game summary{list-style:none;cursor:pointer;padding:16px;display:grid;grid-template-columns:1fr auto;gap:12px 18px;align-items:center}
+.game summary::-webkit-details-marker{display:none}
+.match{display:flex;flex-direction:column;gap:4px;min-width:0}
+.teamrow{display:flex;align-items:center;gap:10px}
+.dot{width:10px;height:10px;border-radius:50%;flex:none}
+.ab{font-family:var(--display);font-weight:700;font-size:26px;width:48px}
+.qb{color:var(--muted);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.adj{font-size:11px;font-weight:600;border-radius:4px;padding:1px 5px;margin-left:4px;background:var(--line);color:var(--ink)}
+.score{font-family:var(--display);font-size:22px;font-weight:600;margin-left:auto}
+.lines{display:flex;gap:18px;text-align:right}
+.lines div{display:flex;flex-direction:column}
+.lines b{font-family:var(--display);font-size:24px;font-weight:700;line-height:1.1}
+.wp{grid-column:1/-1;display:flex;flex-direction:column;gap:4px}
+.wpbar{display:flex;height:8px;border-radius:4px;overflow:hidden;gap:2px}
+.wplab{display:flex;justify-content:space-between;font-size:12px;color:var(--muted)}
+.open{grid-column:1/-1;font-size:12px;color:var(--turf);font-weight:600}
+details[open] .open .more{display:none} details:not([open]) .open .less{display:none}
+.rosters{display:grid;grid-template-columns:1fr 1fr;border-top:1px solid var(--line)}
+.roster{padding:12px 16px;min-width:0;border-top:3px solid var(--tc)}
+.roster+.roster{border-left:1px solid var(--line)}
+.roster h3{font-family:var(--display);font-size:18px;margin:0 0 6px;display:flex;justify-content:space-between}
+@media (max-width:640px){.rosters{grid-template-columns:1fr}.roster+.roster{border-left:0}
+  .game summary{grid-template-columns:1fr}.lines{justify-content:flex-start;text-align:left}}
+.tbl{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600;text-align:right;padding:4px 6px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:5px 6px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
+th.l,td.l{text-align:left} th:first-child,td:first-child{padding-left:0}
+tr.click{cursor:pointer} tr.click:hover td,tr.click[aria-expanded="true"] td{background:var(--turf-soft)}
+.q{display:inline-block;font-size:10px;font-weight:700;background:var(--chip);color:var(--chip-ink);border-radius:4px;padding:1px 5px;margin-left:6px;vertical-align:1px}
+.pos{font-size:11px;font-weight:700;color:var(--muted);width:26px;display:inline-block}
+/* fantasy */
+.controls{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.seg{display:flex;gap:2px;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:3px}
+.seg button{font:600 13px var(--body);border:0;background:none;color:var(--muted);padding:6px 10px;border-radius:6px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--turf-soft);color:var(--ink)}
+input,select{font:500 15px var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:9px 12px}
+input{flex:1;min-width:140px}
+.rb{position:relative;height:14px;min-width:120px}
+.rb .band{position:absolute;top:4px;height:6px;border-radius:3px;opacity:.4}
+.rb .med{position:absolute;top:0;height:14px;width:3px;border-radius:1px}
+.detail td{background:var(--bg);white-space:normal;text-align:left;padding:12px}
+.kv{display:flex;flex-wrap:wrap;gap:16px}
+.kv div{display:flex;flex-direction:column}
+.kv b{font-family:var(--display);font-size:22px;line-height:1.1}
+/* rankings + grades */
+.bar{position:relative;height:10px;width:140px;margin-left:auto}
+.bar .zero{position:absolute;left:50%;top:-3px;bottom:-3px;width:1px;background:var(--muted)}
+.bar .fill{position:absolute;top:0;height:10px;border-radius:2px}
+.cmp{display:grid;grid-template-columns:120px 1fr 56px;gap:8px 12px;align-items:center}
+.cmp .b{height:12px;border-radius:3px;background:var(--heat)}
+.cmp .b.mkt{background:var(--muted);opacity:.6}
+.sitefoot{border-top:1px solid var(--line);padding-top:14px;margin-top:8px}
+.sitefoot a{color:var(--turf)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div><h1>NFL Projections</h1><div class="sub" id="sub"></div></div>
+    <nav role="tablist" aria-label="Sections">
+      <button role="tab" id="t-games" aria-selected="true" data-tab="games">This Week</button>
+      <button role="tab" id="t-fantasy" aria-selected="false" data-tab="fantasy">Fantasy</button>
+      <button role="tab" id="t-rank" aria-selected="false" data-tab="rank">Rankings</button>
+      <button role="tab" id="t-grades" aria-selected="false" data-tab="grades">Grades</button>
+    </nav>
+  </header>
+
+  <section id="games" role="tabpanel" aria-labelledby="t-games"></section>
+
+  <section id="fantasy" role="tabpanel" aria-labelledby="t-fantasy" hidden>
+    <div class="controls">
+      <div class="seg" id="posf" role="group" aria-label="Position">
+        <button aria-pressed="true" data-p="">All</button><button aria-pressed="false" data-p="QB">QB</button>
+        <button aria-pressed="false" data-p="RB">RB</button><button aria-pressed="false" data-p="WR">WR</button>
+        <button aria-pressed="false" data-p="TE">TE</button>
+      </div>
+      <input id="q" type="search" placeholder="Search a player" aria-label="Search a player" autocomplete="off">
+      <select id="tf" aria-label="Filter by team"><option value="">All teams</option></select>
+    </div>
+    <div class="card"><div class="tbl"><table id="ft"></table></div>
+      <div class="foot">Fantasy points in your league's scoring (full PPR, 6-point TDs, tiered yardage bonuses). The bar shows the 10th to 90th percentile with the median marked. Bonus = chance of reaching the first yardage bonus. Questionable players are projected as playing. Tap a player for the full stat line.</div></div>
+  </section>
+
+  <section id="rank" role="tabpanel" aria-labelledby="t-rank" hidden>
+    <div class="card"><div class="tbl"><table id="rkt"></table></div>
+      <div class="foot">Power = points per game better than an average team on a neutral field, split into offense and defense. Ratings blend points scored and allowed with EPA per play, adjusted for opponents.</div></div>
+  </section>
+
+  <section id="grades" role="tabpanel" aria-labelledby="t-grades" hidden></section>
+
+  <footer class="foot sitefoot">
+    Updated automatically on Tuesdays, Thursdays and Sundays. Data from nflverse; injuries from ESPN.
+    <a href="https://github.com/mcgahranjt/nfl-projections">How it works (code and methods)</a>
+  </footer>
+</div>
+
+<script>
+const D = __DATA__;
+const $ = s => document.querySelector(s);
+const f1 = x => (Math.round(x*10)/10).toFixed(1);
+const half = x => Math.round(x*2)/2;
+const esc = s => String(s ?? "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/"/g,"&quot;");
+
+/* ---------- team colors: primary, secondary ---------- */
+const TEAM = {ARI:["#97233F","#FFB612"],ATL:["#A71930","#000000"],BAL:["#241773","#9E7C0C"],BUF:["#00338D","#C60C30"],
+  CAR:["#0085CA","#101820"],CHI:["#0B162A","#C83803"],CIN:["#FB4F14","#000000"],CLE:["#311D00","#FF3C00"],
+  DAL:["#003594","#869397"],DEN:["#FB4F14","#002244"],DET:["#0076B6","#B0B7BC"],GB:["#203731","#FFB612"],
+  HOU:["#03202F","#A71930"],IND:["#002C5F","#A2AAAD"],JAX:["#006778","#D7A22A"],KC:["#E31837","#FFB81C"],
+  LV:["#000000","#A5ACAF"],LAC:["#0080C6","#FFC20E"],LA:["#003594","#FFA300"],MIA:["#008E97","#FC4C02"],
+  MIN:["#4F2683","#FFC62F"],NE:["#002244","#C60C30"],NO:["#D3BC8D","#101820"],NYG:["#0B2265","#A71930"],
+  NYJ:["#125740","#FFFFFF"],PHI:["#004C54","#A5ACAF"],PIT:["#FFB612","#101820"],SF:["#AA0000","#B3995D"],
+  SEA:["#002244","#69BE28"],TB:["#D50A0A","#34302B"],TEN:["#0C2340","#4B92DB"],WAS:["#5A1414","#FFB612"]};
+const rgb = h => [1,3,5].map(i => parseInt(h.slice(i,i+2),16));
+const lum = h => { const c = rgb(h).map(v => { v/=255; return v<=.03928 ? v/12.92 : ((v+.055)/1.055)**2.4; });
+  return .2126*c[0] + .7152*c[1] + .0722*c[2]; };
+const contrast = (a,b) => { const [x,y] = [lum(a),lum(b)].sort((p,q)=>q-p); return (x+.05)/(y+.05); };
+const dist = (a,b) => { const p=rgb(a), q=rgb(b); return Math.hypot(p[0]-q[0],p[1]-q[1],p[2]-q[2]); };
+let SURF = "#ffffff";
+function tc(ab, alt){
+  const [p,s] = TEAM[ab] || ["#5b6862","#5b6862"];
+  const order = alt ? [s,p] : [p,s];
+  return order.find(c => contrast(c,SURF) >= 2) || (contrast(p,SURF) >= contrast(s,SURF) ? p : s);
+}
+function pair(away, home){
+  const h = tc(home); let a = tc(away);
+  if (dist(a,h) < 90) { const alt = tc(away,true); if (dist(alt,h) > dist(a,h)) a = alt; }
+  return [a,h];
+}
+
+/* ---------- header and tabs ---------- */
+function header(){ $("#sub").textContent = `Week ${D.week} · updated ${D.built}`; }
+function selectTab(name){
+  document.querySelectorAll("nav button").forEach(x => x.setAttribute("aria-selected", x.dataset.tab===name));
+  ["games","fantasy","rank","grades"].forEach(id => $("#"+id).hidden = id !== name);
+  try { localStorage.setItem("nfltab", name); } catch(e) {}
+}
+document.querySelectorAll("nav button").forEach(b => b.addEventListener("click", () => selectTab(b.dataset.tab)));
+
+/* ---------- this week ---------- */
+function line(g){ const m = half(g.margin); if (m===0) return "Pick'em";
+  return m>0 ? `${g.home} -${m.toFixed(1)}` : `${g.away} -${(-m).toFixed(1)}`; }
+const adjChip = v => Math.abs(v) >= 0.5 ? `<span class="adj" title="Points vs the QBs behind the team's rating">${v>0?"+":""}${f1(v)}</span>` : "";
+function teamTable(ab){
+  const ps = D.players.filter(p => p.team===ab).sort((a,b)=>b.fpts-a.fpts).slice(0,8);
+  if (!ps.length) return `<p class="note">No fantasy projections for this team.</p>`;
+  return `<div class="tbl"><table><thead><tr><th class="l">Player</th><th>Proj</th><th>P10–P90</th></tr></thead><tbody>${
+    ps.map(p=>`<tr><td class="l"><span class="pos">${p.position}</span>${esc(p.name)}${p.status?`<span class="q">Q</span>`:""}</td>
+      <td class="num"><b>${f1(p.fpts)}</b></td><td class="num">${f1(p.fpts_p10)}–${f1(p.fpts_p90)}</td></tr>`).join("")}</tbody></table></div>`;
+}
+function renderGames(){
+  const open = new Set([...document.querySelectorAll("details.game[open]")].map(d=>d.dataset.g));
+  const notes = (D.qbNotes||[]).map(n=>`<div class="alert">Starting QB change: ${esc(n)}</div>`).join("");
+  if (!D.games.length) { $("#games").innerHTML = notes + `<div class="card note">No games projected yet.</div>`; return; }
+  $("#games").innerHTML = notes + D.games.map((g,i) => {
+    const [ca,ch] = pair(g.away,g.home), hw = Math.round(g.hwp*100);
+    const d = new Date(g.day+"T12:00:00").toLocaleDateString("en-US",{weekday:"short",month:"short",day:"numeric"});
+    const isOpen = open.size ? open.has(g.id) : i===0;
+    return `<details class="game" data-g="${g.id}" ${isOpen?"open":""}><summary>
+      <div class="match">
+        <div class="lbl">${d}</div>
+        <div class="teamrow"><span class="dot" style="background:${ca}"></span><span class="ab">${g.away}</span><span class="qb">${esc(g.awayQB)}${adjChip(g.awayAdj)}</span><span class="score num">${f1(g.awayPts)}</span></div>
+        <div class="teamrow"><span class="dot" style="background:${ch}"></span><span class="ab">${g.home}</span><span class="qb">${esc(g.homeQB)}${g.neutral?" (neutral site)":""}${adjChip(g.homeAdj)}</span><span class="score num">${f1(g.homePts)}</span></div>
+      </div>
+      <div class="lines"><div><span class="lbl">Model line</span><b>${line(g)}</b></div><div><span class="lbl">Total</span><b class="num">${half(g.total).toFixed(1)}</b></div></div>
+      <div class="wp"><div class="wpbar" role="img" aria-label="Win probability ${g.away} ${100-hw}%, ${g.home} ${hw}%"><span style="width:${100-hw}%;background:${ca}"></span><span style="width:${hw}%;background:${ch}"></span></div>
+        <div class="wplab num"><span>${g.away} ${100-hw}%</span><span>Win probability</span><span>${g.home} ${hw}%</span></div></div>
+      <div class="open"><span class="more">Show fantasy projections ▾</span><span class="less">Hide ▴</span></div>
+    </summary>
+    <div class="rosters">
+      <div class="roster" style="--tc:${ca}"><h3><span>${g.away}</span><span class="lbl">Away</span></h3>${teamTable(g.away)}</div>
+      <div class="roster" style="--tc:${ch}"><h3><span>${g.home}</span><span class="lbl">Home</span></h3>${teamTable(g.home)}</div>
+    </div></details>`; }).join("");
+}
+
+/* ---------- fantasy ---------- */
+let posFilter = "", openPlayer = null;
+document.querySelectorAll("#posf button").forEach(b => b.addEventListener("click", () => {
+  posFilter = b.dataset.p; document.querySelectorAll("#posf button").forEach(x => x.setAttribute("aria-pressed", x===b)); renderFantasy(); }));
+$("#q").addEventListener("input", renderFantasy); $("#tf").addEventListener("change", renderFantasy);
+[...new Set(D.players.map(p=>p.team))].sort().forEach(t => $("#tf").insertAdjacentHTML("beforeend", `<option>${t}</option>`));
+function bonusFor(p){ return p.position==="QB" ? p.pass_yds_bonus_pct : Math.max(p.rush_yds_bonus_pct, p.rec_yds_bonus_pct); }
+function statLine(p){
+  const kv = [];
+  if (p.position==="QB") kv.push(["Pass yds", f1(p.pass_yds)], ["Pass TD", f1(p.pass_td)], ["INT", f1(p.int)]);
+  if (p.carries >= 0.5) kv.push(["Carries", f1(p.carries)], ["Rush yds", f1(p.rush_yds)], ["Rush TD", (+p.rush_td).toFixed(2)]);
+  if (p.position!=="QB") kv.push(["Targets", f1(p.targets)], ["Rec", f1(p.rec)], ["Rec yds", f1(p.rec_yds)], ["Rec TD", (+p.rec_td).toFixed(2)]);
+  kv.push(["Median", f1(p.fpts_median)]);
+  return `<div class="kv">${kv.map(([k,v])=>`<div><span class="lbl">${k}</span><b class="num">${v}</b></div>`).join("")}</div>`;
+}
+function renderFantasy(){
+  const q = $("#q").value.trim().toLowerCase(), t = $("#tf").value;
+  const ps = D.players.filter(p => (!posFilter||p.position===posFilter) && (!t||p.team===t) && (!q||p.name.toLowerCase().includes(q)))
+    .sort((a,b)=>b.fpts-a.fpts).slice(0,150);
+  const hi = Math.max(...ps.map(p=>p.fpts_p90), 10), x = v => (Math.max(v,0)/hi*100).toFixed(1)+"%";
+  $("#ft").innerHTML = `<thead><tr><th>#</th><th class="l">Player</th><th class="l">Team</th><th>Proj</th><th class="l">Range</th><th>Bonus</th></tr></thead><tbody>${
+    ps.map((p,i)=>{ const c = tc(p.team), exp = openPlayer===p.player_id;
+      return `<tr class="click" tabindex="0" data-p="${p.player_id}" aria-expanded="${exp}"><td class="num">${i+1}</td>
+        <td class="l"><span class="pos">${p.position}</span><b>${esc(p.name)}</b>${p.status?`<span class="q" title="${esc(p.status)}">Q</span>`:""}</td>
+        <td class="l">${p.team} <span class="sub">${p.home?"vs":"@"} ${p.opp}</span></td>
+        <td class="num"><b>${f1(p.fpts)}</b></td>
+        <td class="l"><div class="rb" title="${f1(p.fpts_p10)} to ${f1(p.fpts_p90)}"><span class="band" style="background:${c};left:${x(p.fpts_p10)};width:calc(${x(p.fpts_p90)} - ${x(p.fpts_p10)})"></span><span class="med" style="background:${c};left:${x(p.fpts_median)}"></span></div>
+          <span class="sub num">${f1(p.fpts_p10)}–${f1(p.fpts_p90)}</span></td>
+        <td class="num">${Math.round(bonusFor(p))}%</td></tr>
+        ${exp?`<tr class="detail"><td colspan="6">${statLine(p)}</td></tr>`:""}`; }).join("")
+    || `<tr><td colspan="6" class="l note">No projected player matches.</td></tr>`}</tbody>`;
+  document.querySelectorAll("#ft tr.click").forEach(tr => {
+    const go = () => { openPlayer = openPlayer===tr.dataset.p ? null : tr.dataset.p; renderFantasy(); };
+    tr.addEventListener("click", go); tr.addEventListener("keydown", e => { if (e.key==="Enter") go(); });
+  });
+}
+
+/* ---------- rankings ---------- */
+function renderRank(){
+  const mx = Math.max(...D.rank.map(r=>Math.abs(r.power)), 1);
+  $("#rkt").innerHTML = `<thead><tr><th>#</th><th class="l">Team</th><th>W-L</th><th>Power</th><th></th><th>Off</th><th>Def</th></tr></thead><tbody>${
+    D.rank.map(r=>{ const w = Math.abs(r.power)/mx*50;
+      return `<tr><td class="num">${r.rank}</td><td class="l"><b>${r.team}</b></td><td class="num">${r.W}-${r.L}</td>
+        <td class="num">${r.power>0?"+":""}${f1(r.power)}</td>
+        <td><div class="bar"><span class="zero"></span><span class="fill" style="background:${tc(r.team)};${r.power>=0?"left:50%":`left:${50-w}%`};width:${w}%"></span></div></td>
+        <td class="num">${r.offense>0?"+":""}${f1(r.offense)}</td><td class="num">${r.defense>0?"+":""}${f1(r.defense)}</td></tr>`}).join("")}</tbody>`;
+}
+
+/* ---------- grades ---------- */
+function cmpRows(rows, mx){
+  return `<div class="cmp">${rows.map(([lab,v,cls])=>`<span class="sub">${lab}</span><span class="b ${cls||""}" style="width:${(v/mx*100).toFixed(1)}%"></span><span class="num" style="text-align:right">${f1(v)}</span>`).join("")}</div>`;
+}
+function renderGrades(){
+  const G = D.grades || {}, ref = G.reference || {}, live = G.games, fan = G.fantasy || [];
+  let html = "";
+  if (live) {
+    html += `<div class="card"><h2>Spreads this season</h2><p class="note">${live.games} games graded since week ${G.first_week_graded}. Average miss on the final margin, in points (lower is better).</p>
+      ${cmpRows([["Model", live.spread_MAE], ["Market close", live.market_spread_MAE, "mkt"], ["Home edge only", live.home_edge_MAE, "mkt"]], Math.max(live.home_edge_MAE, live.spread_MAE)*1.05)}
+      <p class="note">Winners picked: ${Math.round(live.winner_pct)}%. Totals: model ${f1(live.total_MAE)}, market ${f1(live.market_total_MAE)}.</p></div>`;
+  } else {
+    html += `<div class="card"><h2>Spreads this season</h2><p class="note">Live grading starts once week 7's games are played. Past seasons are below.</p></div>`;
+  }
+  if (fan.length) {
+    html += `<div class="card"><h2>Fantasy this season</h2><div class="tbl"><table><thead><tr><th class="l">Position</th><th>Players</th><th>Model miss</th><th>Season avg miss</th><th>Below P10</th><th>Above P90</th></tr></thead><tbody>${
+      fan.map(r=>`<tr><td class="l">${r.position}</td><td class="num">${r.players}</td><td class="num">${f1(r.model_MAE_same ?? r.MAE)}</td><td class="num">${r.season_avg_MAE==null?"–":f1(r.season_avg_MAE)}</td><td class="num">${Math.round(r.below_P10)}%</td><td class="num">${Math.round(r.above_P90)}%</td></tr>`).join("")}</tbody></table></div>
+      <div class="foot">Average miss in fantasy points. About 10% of results should land below P10 and 10% above P90.</div></div>`;
+  }
+  if (ref.spread) {
+    html += `<div class="card"><h2>Past seasons (backtest)</h2><p class="note">Every game from ${ref.spread.seasons} projected using only earlier games. Average miss on the final margin, in points.</p>
+      ${cmpRows([["Model", ref.spread.model], ["Market close", ref.spread.market, "mkt"]], ref.spread.model*1.05)}`;
+    if (ref.fantasy) html += `<p class="note" style="margin-top:8px">Fantasy, 2020–2025: average miss by position vs the player's season average.</p>
+      <div class="tbl"><table><thead><tr><th class="l">Position</th><th>Model</th><th>Season avg</th></tr></thead><tbody>${
+        ref.fantasy.filter(r=>r.position!=="all").map(r=>`<tr><td class="l">${r.position}</td><td class="num">${f1(r.model)}</td><td class="num">${f1(r.season_avg)}</td></tr>`).join("")}</tbody></table></div>`;
+    html += `</div>`;
+  }
+  $("#grades").innerHTML = html;
+}
+
+/* ---------- render, and re-render when the theme changes ---------- */
+function renderAll(){
+  SURF = getComputedStyle(document.documentElement).getPropertyValue("--surface").trim() || "#ffffff";
+  header(); renderGames(); renderFantasy(); renderRank(); renderGrades();
+}
+renderAll();
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change", renderAll);
+new MutationObserver(renderAll).observe(document.documentElement, {attributes:true, attributeFilter:["data-theme"]});
+try { const t = localStorage.getItem("nfltab"); if (t && $("#"+t)) selectTab(t); } catch(e) {}
+</script>
+</body>
+</html>

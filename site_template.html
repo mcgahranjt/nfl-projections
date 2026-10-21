@@ -187,6 +187,11 @@ document.querySelectorAll("nav button").forEach(b => b.addEventListener("click",
 /* ---------- this week ---------- */
 function line(g){ const m = half(g.margin); if (m===0) return "Pick'em";
   return m>0 ? `${g.home} -${m.toFixed(1)}` : `${g.away} -${(-m).toFixed(1)}`; }
+function kickoff(hhmm){
+  const m = /^(\d{1,2}):(\d{2})/.exec(hhmm || ""); if (!m) return "";
+  const h = +m[1], ap = h >= 12 ? "PM" : "AM";
+  return ` · ${((h + 11) % 12) + 1}:${m[2]} ${ap} ET`;
+}
 const adjChip = v => Math.abs(v) >= 0.5 ? `<span class="adj" title="Points vs the QBs behind the team's rating">${v>0?"+":""}${f1(v)}</span>` : "";
 function teamTable(ab){
   const ps = D.players.filter(p => p.team===ab).sort((a,b)=>b.fpts-a.fpts).slice(0,8);
@@ -201,7 +206,7 @@ function renderGames(){
   if (!D.games.length) { $("#games").innerHTML = notes + `<div class="card note">No games projected yet.</div>`; return; }
   $("#games").innerHTML = notes + D.games.map((g,i) => {
     const [ca,ch] = pair(g.away,g.home), hw = Math.round(g.hwp*100);
-    const d = new Date(g.day+"T12:00:00").toLocaleDateString("en-US",{weekday:"short",month:"short",day:"numeric"});
+    const d = new Date(g.day+"T12:00:00").toLocaleDateString("en-US",{weekday:"short",month:"short",day:"numeric"}) + kickoff(g.time);
     const isOpen = open.size ? open.has(g.id) : i===0;
     return `<details class="game" data-g="${g.id}" ${isOpen?"open":""}><summary>
       <div class="match">

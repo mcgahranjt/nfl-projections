@@ -52,10 +52,13 @@ def gather():
         players["home"] = players.team.map(home).fillna(False)
         players["status"] = players.status.fillna("")
         players["player_id"] = players.player_id.astype(str)
+    # kickoff order: date, then kickoff time (Eastern), then game ID
+    sort_cols = ["gameday", "gametime", "game_id"] if "gametime" in gp else ["gameday", "game_id"]
     games = [{"id": r.game_id, "day": r.gameday, "away": r.away_team, "home": r.home_team,
               "awayQB": r.away_qb, "homeQB": r.home_qb, "awayAdj": r.qb_away, "homeAdj": r.qb_home,
               "awayPts": r.proj_away, "homePts": r.proj_home, "margin": r.proj_margin, "total": r.proj_total,
-              "hwp": r.home_win_prob, "neutral": int(r.neutral)} for r in gp.sort_values(["gameday", "game_id"]).itertuples()]
+              "hwp": r.home_win_prob, "neutral": int(r.neutral), "time": str(getattr(r, "gametime", "") or "")}
+             for r in gp.sort_values(sort_cols).itertuples()]
     rank = pd.read_csv(os.path.join(OUT, "team_ratings.csv"))
     notes_path, grades_path = os.path.join(OUT, "qb_notes.json"), os.path.join(OUT, "grades_summary.json")
     return {"week": week, "built": dt.datetime.now().strftime("%b %-d, %-I:%M %p"), "games": games,

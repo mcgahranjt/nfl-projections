@@ -458,7 +458,7 @@ def current(games, teams):
 
     os.makedirs(OUT_DIR, exist_ok=True)
     team.round(2).to_csv(os.path.join(OUT_DIR, "team_ratings.csv"), index=False)
-    out = p[["game_id", "week", "gameday", "away_team", "home_team", "away_qb", "home_qb", "neutral",
+    out = p[["game_id", "week", "gameday", "gametime", "away_team", "home_team", "away_qb", "home_qb", "neutral",
              "proj_away", "proj_home", "proj_margin", "proj_total", "home_win_prob", "qb_away", "qb_home"]].copy()
     out.insert(0, "as_of", today.date().isoformat())
     out["gameday"] = out.gameday.dt.date.astype(str)

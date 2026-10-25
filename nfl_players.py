@@ -445,6 +445,7 @@ def current(pw, tg, games):
     eff = player_efficiency(pw, pd.Timestamp(gp.gameday.min()), lg)
     opp_f = opponent_factors(tg, pd.Timestamp.max, lg)
     inj = N.injury_report()
+    roster = N.roster_status(season)
     rng = np.random.default_rng(SEED)
     sched = games.set_index("game_id")
     names = pd.concat([games[["home_qb_id", "home_qb_name"]].set_axis(["id", "name"], axis=1),
@@ -461,6 +462,9 @@ def current(pw, tg, games):
                 status = inj.get((team, N.name_key(r.player_display_name)), "")
                 if N.is_out(status):
                     removed.append(f"{r.player_display_name} ({team}) - {status}")
+                    continue
+                if roster.get(r.player_id) in N.ROSTER_OUT:
+                    removed.append(f"{r.player_display_name} ({team}) - {N.ROSTER_OUT[roster[r.player_id]]} (NFL roster)")
                     continue
                 if r.position == "QB" and r.player_id != qb_id:
                     continue

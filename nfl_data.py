@@ -143,6 +143,28 @@ def is_out(status):
     return str(status).lower().startswith(OUT_STATUSES)
 
 
+ROSTER_OUT = {"RES": "reserve list (IR/PUP)", "INA": "inactive", "CUT": "released", "RET": "retired"}
+
+
+def roster_status(season):
+    """
+    Each player's status on the NFL's latest weekly roster (nflverse), keyed by player ID.
+    Catches players on IR/PUP that ESPN's injury feed no longer lists. Saved as a fallback.
+    """
+    path = os.path.join(DATA_DIR, f"rosters_weekly_{season}.csv")
+    try:
+        import nflreadpy as nfl
+        r = nfl.load_rosters_weekly([season]).to_pandas()
+        r = r[r.week == r.week.max()][["gsis_id", "team", "status", "full_name"]]
+        r.to_csv(path, index=False)
+    except Exception as e:
+        if not os.path.exists(path):
+            print(f"Couldn't get roster statuses ({e.__class__.__name__}); only the injury report applies.")
+            return {}
+        r = pd.read_csv(path)
+    return dict(zip(r.gsis_id, r.status))
+
+
 PLAYER_COLS = ["player_id", "player_display_name", "position", "season", "week", "season_type", "game_id",
                "team", "opponent_team", "completions", "attempts", "passing_yards", "passing_tds",
                "passing_interceptions", "sacks_suffered", "passing_2pt_conversions", "carries", "rushing_yards",

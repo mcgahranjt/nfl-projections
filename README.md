@@ -19,6 +19,8 @@ The ratings are ridge regressions anchored to a preseason starting point: 60% of
 
 A team's rating reflects the quarterbacks who played in the games behind it. When a different quarterback starts, the projection shifts by the difference between the starter and those quarterbacks, measured in EPA per dropback (recent seasons count more, and players with few dropbacks are pulled toward backup level), times 35 dropbacks. The starter is the one listed on the schedule, unless ESPN's injury report has him Out, Doubtful, on injured reserve or suspended. In that case the team's healthy quarterback with the most recent dropbacks starts instead.
 
+Skill players are adjusted the same way. When a regular wide receiver, tight end or running back (one who played in two of the team's last three games and averaged at least four targets and carries) is out, through ESPN's injury report or the NFL's weekly roster, his team's projection drops by 4.7 points times his share of the team's targets and carries, and the total drops by 1.8 points times that share. A top receiver with about a quarter of the opportunities is worth roughly one point. The size was fit on the 2016-2021 projections and held up on 2022-2026 (3.9 points per share), although it improved the spread error only slightly (9.775 to 9.765 points on 2022-2026). Players who have already missed two of the last three games are not counted, since the ratings already include those games.
+
 ### Spread and total
 
 A small regression turns the ratings into a projected margin and total, with home field (about 1.7 points in recent seasons), rest days and the quarterback adjustment. Its weights come from the previous eight seasons only. Win probability assumes a game margin standard deviation of about 13 points.

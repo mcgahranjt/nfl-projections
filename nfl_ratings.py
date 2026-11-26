@@ -20,6 +20,11 @@ A game's projection comes from a small regression on those inputs:
 The weights are fit on earlier seasons only (the last BETA_SEASONS), using projections that were
 themselves made only from games before each one.
 
+Skill players: when a regular WR, TE or RB is out (injury report or the NFL's weekly roster), his team's
+projection drops by SKILL_POINTS_PER_SHARE x his share of the team's targets and carries. Players who
+have already missed two of the team's last three games are left out, since the ratings already reflect
+games without them.
+
 Starters: the schedule's listed starter for each team. data/qb_overrides.csv (columns: team, qb_name)
 replaces it by hand, e.g. when a starter is ruled out after the schedule was updated.
 
@@ -56,6 +61,12 @@ FINAL_PRIOR_GAMES = 1               # light anchor when computing a finished sea
 QB_HALF_LIFE_DAYS = 365             # a dropback from a year ago counts half
 QB_BASE_DAYS = 300                  # games behind a team's rating: roughly this season plus last
 DROPBACKS_PER_GAME = 35
+# Skill-player absences: a regular WR/TE/RB (played 2 of the team's last 3 games, 4+ targets and carries
+# per game) who is out costs his team this many points per full share of its targets and carries.
+# Fit on 2016-2021 projections (+4.7 +/- 1.9 points; 2022-2026 gave +3.9 +/- 2.2), so a top receiver with
+# ~23% of the opportunities is worth about 1 point. Totals drop by the smaller amount per share.
+SKILL_POINTS_PER_SHARE = 4.7
+SKILL_TOTAL_PER_SHARE = 1.8
 FRANCHISE = {"OAK": "LV", "SD": "LAC", "STL": "LA"}
 
 # chosen by the backtest (python3 nfl_ratings.py --backtest)
@@ -411,6 +422,38 @@ def starters_for(week_games, games, qbs):
     return out, id_name, notes
 
 
+def skill_absences(wk, cur, cutoff):
+    """
+    Each team's share of targets and carries belonging to regular WRs, TEs and RBs who are out this week.
+    Returns ({team: share}, [notes]).
+    """
+    pw = N.player_weekly([N.CURRENT_SEASON])
+    pw = pw[(pw.season_type == "REG") & pw.position.isin(["WR", "TE", "RB"])].copy()
+    pw["opp"] = pd.to_numeric(pw.targets, errors="coerce").fillna(0) + pd.to_numeric(pw.carries, errors="coerce").fillna(0)
+    pw["share"] = pw.opp / pw.groupby(["week", "team"]).opp.transform("sum")
+    inj, roster = N.injury_report(), N.roster_status(N.CURRENT_SEASON)
+    played = cur[cur.played & (cur.gameday < cutoff)]
+    shares, notes = {}, []
+    for team in set(wk.home_team) | set(wk.away_team):
+        weeks = sorted(played[(played.home_team == team) | (played.away_team == team)].week)[-3:]
+        tp = pw[pw.team == team]
+        total = 0.0
+        for pid, g in tp.groupby("player_id"):
+            name = g.player_display_name.iloc[-1]
+            status = inj.get((team, N.name_key(name)), "")
+            out = N.is_out(status) or roster.get(pid) in N.ROSTER_OUT
+            hist = g.sort_values("week").tail(6)
+            if not out or g.week.isin(weeks).sum() < 2 or hist.opp.mean() < 4:
+                continue
+            total += hist.share.mean()
+            notes.append(f"{team}: {name} ({status or N.ROSTER_OUT.get(roster.get(pid), 'out')}), "
+                         f"{100 * hist.share.mean():.0f}% of targets and carries, "
+                         f"-{SKILL_POINTS_PER_SHARE * hist.share.mean():.1f}")
+        if total:
+            shares[team] = total
+    return shares, sorted(notes)
+
+
 def current(games, teams):
     finals = season_finals(games, teams, range(FIRST_SEASON - 1, N.CURRENT_SEASON))
     games = prepare(games)
@@ -434,6 +477,11 @@ def current(games, teams):
     wk = wk.join(qb_adjustments(wk, qbs, QB_PRIOR_DROPBACKS, QB_BACKUP_GAP, starters))
     wk["lg_pts"] = league_points(games, cutoff)
     p = predict(wk, b)
+    skill, skill_notes = skill_absences(p, cur, cutoff)
+    p["skill_home"] = [-SKILL_POINTS_PER_SHARE * skill.get(t, 0.0) for t in p.home_team]
+    p["skill_away"] = [-SKILL_POINTS_PER_SHARE * skill.get(t, 0.0) for t in p.away_team]
+    p["proj_margin"] += p.skill_home - p.skill_away
+    p["proj_total"] -= SKILL_TOTAL_PER_SHARE * (p.home_team.map(skill).fillna(0) + p.away_team.map(skill).fillna(0))
     p["proj_home"], p["proj_away"] = (p.proj_total + p.proj_margin) / 2, (p.proj_total - p.proj_margin) / 2
     p["home_win_prob"] = norm.cdf(p.proj_margin / b["sd"])
     p["home_qb"] = [id_name.get(starters[g][0], "") for g in p.game_id]
@@ -459,7 +507,8 @@ def current(games, teams):
     os.makedirs(OUT_DIR, exist_ok=True)
     team.round(2).to_csv(os.path.join(OUT_DIR, "team_ratings.csv"), index=False)
     out = p[["game_id", "week", "gameday", "gametime", "away_team", "home_team", "away_qb", "home_qb", "neutral",
-             "proj_away", "proj_home", "proj_margin", "proj_total", "home_win_prob", "qb_away", "qb_home"]].copy()
+             "proj_away", "proj_home", "proj_margin", "proj_total", "home_win_prob", "qb_away", "qb_home",
+             "skill_away", "skill_home"]].copy()
     out.insert(0, "as_of", today.date().isoformat())
     out["gameday"] = out.gameday.dt.date.astype(str)
     out = out.round(3)
@@ -487,6 +536,10 @@ def current(games, teams):
                          "Total": (out.proj_total * 2).round() / 2,
                          "Home win": (out.home_win_prob * 100).round().astype(int).astype(str) + "%"})
     print(show.to_string(index=False))
+    if skill_notes:
+        print("\nSkill players out (points off that team's projection):")
+        for n in skill_notes:
+            print(f"  {n}")
     for n in qb_notes:
         print(f"  Starter change from the injury report - {n}")
     print("\nQB adjustments in parentheses: points vs the quarterbacks behind that team's rating (shown when 0.5+).")

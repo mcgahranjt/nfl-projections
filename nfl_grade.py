@@ -36,7 +36,7 @@ def grade_games(games):
         return None, pd.DataFrame()
     h = pd.read_csv(path)
     h = h[h.as_of <= h.gameday].sort_values("as_of").groupby("game_id").tail(1)
-    g = games[games.played][["game_id", "home_score", "away_score", "spread_line", "total_line", "neutral"]]
+    g = games[games.played][["game_id", "home_score", "away_score", "spread_line", "total_line"]]
     m = h.merge(g, on="game_id")
     if m.empty:
         return None, m
